@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
+import pickle
+import os
 
 
 class FlashCardApp:
@@ -21,7 +23,12 @@ class FlashCardApp:
         self.entry_font = ("Helvetica", 14)
         self.button_font = ("Helvetica", 12)
 
+        self.load_flashcards()
+
         self.setup_ui()
+
+        # Bind the close event to save flashcards on exit
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def setup_ui(self):
         tk.Label(self.root, text="Front:", font=self.label_font).pack(pady=5)
@@ -38,13 +45,16 @@ class FlashCardApp:
         self.buttons_frame = tk.Frame(self.root)
         self.buttons_frame.pack(pady=20)
 
-        self.show_button = tk.Button(self.buttons_frame, text="Show Card", command=self.show_card, font=self.button_font)
+        self.show_button = tk.Button(self.buttons_frame, text="Show Card", command=self.show_card,
+                                     font=self.button_font)
         self.show_button.pack(side=tk.LEFT, padx=5)
 
-        self.next_button = tk.Button(self.buttons_frame, text="Next Card", command=self.next_card, font=self.button_font)
+        self.next_button = tk.Button(self.buttons_frame, text="Next Card", command=self.next_card,
+                                     font=self.button_font)
         self.next_button.pack(side=tk.LEFT, padx=5)
 
-        self.prev_button = tk.Button(self.buttons_frame, text="Previous Card", command=self.prev_card, font=self.button_font)
+        self.prev_button = tk.Button(self.buttons_frame, text="Previous Card", command=self.prev_card,
+                                     font=self.button_font)
         self.prev_button.pack(side=tk.LEFT, padx=5)
 
         self.known_button = tk.Button(self.buttons_frame, text="Known", command=self.mark_known, font=self.button_font)
@@ -70,9 +80,9 @@ class FlashCardApp:
             self.flashcards.append((front, back))
             self.front_text.set("")
             self.back_text.set("")
-            messagebox.showinfo("Success", "Flashcard added!")
+            messagebox.showinfo("Success", "Flashcard added!", parent=self.root)
         else:
-            messagebox.showwarning("Input Error", "Both front and back text are required.")
+            messagebox.showwarning("Input Error", "Both front and back text are required.", parent=self.root)
 
     def show_card(self):
         if self.flashcards:
@@ -80,21 +90,21 @@ class FlashCardApp:
             self.card_display.config(text=front)
             self.current_card_side = 'front'
         else:
-            messagebox.showwarning("No Cards", "There are no flashcards to show.")
+            messagebox.showwarning("No Cards", "There are no flashcards to show.", parent=self.root)
 
     def next_card(self):
         if self.flashcards:
             self.current_card_index = (self.current_card_index + 1) % len(self.flashcards)
             self.show_card()
         else:
-            messagebox.showwarning("No Cards", "There are no flashcards to navigate.")
+            messagebox.showwarning("No Cards", "There are no flashcards to navigate.", parent=self.root)
 
     def prev_card(self):
         if self.flashcards:
             self.current_card_index = (self.current_card_index - 1) % len(self.flashcards)
             self.show_card()
         else:
-            messagebox.showwarning("No Cards", "There are no flashcards to navigate.")
+            messagebox.showwarning("No Cards", "There are no flashcards to navigate.", parent=self.root)
 
     def mark_known(self):
         if self.flashcards:
@@ -103,7 +113,7 @@ class FlashCardApp:
                 self.current_card_index = 0
             self.show_card()
         else:
-            messagebox.showwarning("No Cards", "There are no flashcards to mark as known.")
+            messagebox.showwarning("No Cards", "There are no flashcards to mark as known.", parent=self.root)
 
     def flip_card(self):
         if self.flashcards:
@@ -115,11 +125,23 @@ class FlashCardApp:
                 self.card_display.config(text=front)
                 self.current_card_side = 'front'
         else:
-            messagebox.showwarning("No Cards", "There are no flashcards to flip.")
+            messagebox.showwarning("No Cards", "There are no flashcards to flip.", parent=self.root)
+
+    def save_flashcards(self):
+        with open("flashcards.pkl", "wb") as f:
+            pickle.dump(self.flashcards, f)
+
+    def load_flashcards(self):
+        if os.path.exists("flashcards.pkl"):
+            with open("flashcards.pkl", "rb") as f:
+                self.flashcards = pickle.load(f)
+
+    def on_closing(self):
+        self.save_flashcards()
+        self.root.destroy()
 
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = FlashCardApp(root)
     root.mainloop()
-
